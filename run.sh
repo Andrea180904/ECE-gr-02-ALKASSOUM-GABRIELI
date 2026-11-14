@@ -25,11 +25,11 @@ case "$MODE" in
   spark)
     EXTRA=()
     if [[ "$SCRIPT" == *streaming* ]]; then
-      SPARK_VERSION=$(docker exec "$CONTAINER" python -c "import pyspark; print(pyspark.__version__)" | tr -d '\r')
+      SPARK_VERSION=$(docker exec "$CONTAINER" bash -c 'ls "$SPARK_HOME"/jars/' | sed -n 's/^spark-core_2\.13-\(.*\)\.jar$/\1/p' | tr -d '\r')
       EXTRA+=(--packages "org.apache.spark:spark-sql-kafka-0-10_2.13:${SPARK_VERSION}")
     fi
     docker exec -i -u jovyan -w "$WORKDIR" "$CONTAINER" \
-      spark-submit --master "local[*]" --driver-memory "$MEM" \
+      spark-submit --master "${SPARK_MASTER:-local[4]}" --driver-memory "$MEM" \
       --conf spark.sql.shuffle.partitions=64 \
       --conf spark.ui.showConsoleProgress=false \
       ${EXTRA[@]+"${EXTRA[@]}"} "$WORKDIR/$SCRIPT" "$@"
