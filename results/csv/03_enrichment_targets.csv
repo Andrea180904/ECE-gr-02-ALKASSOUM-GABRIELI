@@ -1,0 +1,6 @@
+item,n
+film x genre x year slots,9832
+distinct films,6821
+film principals,20446
+distinct people,10157
+films with < 3 principals,7
