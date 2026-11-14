@@ -1,0 +1,57 @@
+**All data-quality checks (including those with 0 affected rows)**
+
+| table | check | description | affected_rows | affected_pct | action |
+| --- | --- | --- | --- | --- | --- |
+| name_basics | alive_over_max_age | no deathYear but older than 122 | 2537 | 0.016 | kept, flagged (death probably not recorded) |
+| name_basics | birth_in_future | birthYear > 2026 | 0 | 0 | birthYear set to NULL |
+| name_basics | death_before_birth | deathYear < birthYear | 28 | 0 | birth and death years set to NULL |
+| name_basics | death_in_future | deathYear > 2026 | 0 | 0 | deathYear set to NULL |
+| name_basics | duplicate_nconst | same primary key appears more than once | 0 | 0 | kept one row per nconst |
+| name_basics | lifespan_over_max | lifespan > 122 years | 0 | 0 | birth and death years set to NULL |
+| name_basics | missing_name | no primaryName | 293 | 0.002 | kept, flagged |
+| name_basics | non_numeric_birthYear | birthYear is not a valid number | 0 | 0 | set to NULL |
+| name_basics | non_numeric_deathYear | deathYear is not a valid number | 0 | 0 | set to NULL |
+| name_basics | unknown_known_for_title | knownForTitles id missing from title_basics (% of knownFor references) | 68 | 0 | kept (column not used in the analyses) |
+| title_akas | duplicate_titleid_ordering | duplicate titleid ordering | 0 | 0 | kept one row per (titleId, ordering) |
+| title_akas | invalid_is_original_title | invalid is original title | 0 | 0 | kept, flagged |
+| title_akas | orphan_titleId | alternative title for a missing title | 8 | 0 | row quarantined |
+| title_basics | duplicate_tconst | same primary key appears more than once | 0 | 0 | kept one row per tconst |
+| title_basics | end_before_start | series ends before it starts | 0 | 0 | endYear set to NULL |
+| title_basics | invalid_is_adult | isAdult not 0/1 | 0 | 0 | set to NULL |
+| title_basics | missing_genres | no genre | 548,144 | 4.229 | empty genre array |
+| title_basics | missing_primary_title | no primary title | 0 | 0 | replaced by originalTitle |
+| title_basics | non_numeric_endYear | endYear is not a valid number | 0 | 0 | set to NULL |
+| title_basics | non_numeric_isAdult | isAdult is not a valid number | 0 | 0 | set to NULL |
+| title_basics | non_numeric_runtimeMinutes | runtimeMinutes is not a valid number | 0 | 0 | set to NULL |
+| title_basics | non_numeric_startYear | startYear is not a valid number | 0 | 0 | set to NULL |
+| title_basics | non_positive_runtime | runtime <= 0 minutes | 4 | 0 | runtime set to NULL |
+| title_basics | runtime_over_1000_min | runtime > 1000 minutes (experimental) | 442 | 0.003 | kept, flagged |
+| title_basics | start_before_first_film | startYear < 1874 | 0 | 0 | startYear set to NULL |
+| title_basics | start_in_future | startYear > 2026 (announced titles) | 6238 | 0.048 | kept, flagged; excluded by year filters |
+| title_crew | duplicate_tconst | duplicate tconst | 0 | 0 | kept one row per tconst |
+| title_crew | empty_directors_id | (% of references) | 0 | 0 | id removed |
+| title_crew | empty_writers_id | (% of references) | 0 | 0 | id removed |
+| title_crew | orphan_tconst | orphan tconst | 0 | 0 | row quarantined |
+| title_crew | unknown_directors_id | person id missing from name_basics (% of references) | 430 | 0.004 | reference quarantined |
+| title_crew | unknown_writers_id | person id missing from name_basics (% of references) | 1159 | 0.008 | reference quarantined |
+| title_episode | duplicate_tconst | duplicate tconst | 0 | 0 | kept one row per tconst |
+| title_episode | episode_is_its_own_parent | episode is its own parent | 0 | 0 | row quarantined |
+| title_episode | non_numeric_episodeNumber | non numeric episodeNumber | 0 | 0 | set to NULL |
+| title_episode | non_numeric_seasonNumber | non numeric seasonNumber | 0 | 0 | set to NULL |
+| title_episode | non_positive_episode | non positive episode | 7130 | 0.071 | episodeNumber set to NULL |
+| title_episode | non_positive_season | non positive season | 0 | 0 | seasonNumber set to NULL |
+| title_episode | orphan_episode_tconst | episode id missing from title_basics | 0 | 0 | row quarantined |
+| title_episode | orphan_parent_tconst | parent series missing from title_basics | 5 | 0 | row quarantined |
+| title_episode | parent_not_a_series | parent is not tvSeries/tvMiniSeries | 0 | 0 | kept, flagged |
+| title_principals | credited_10y_after_death | non-archive credit > 10 years after death | 164,868 | 0.16 | kept, flagged |
+| title_principals | credited_before_birth | title released before the person was born | 3109 | 0.003 | kept, flagged |
+| title_principals | duplicate_tconst_ordering | duplicate tconst ordering | 0 | 0 | kept one row per (tconst, ordering) |
+| title_principals | orphan_nconst | credit for a person missing from name_basics | 7262 | 0.007 | row quarantined |
+| title_principals | orphan_tconst | credit for a title missing from title_basics | 0 | 0 | row quarantined |
+| title_ratings | duplicate_tconst | duplicate tconst | 0 | 0 | kept one row per tconst |
+| title_ratings | non_numeric_averageRating | non numeric averageRating | 0 | 0 | row quarantined |
+| title_ratings | non_numeric_numVotes | non numeric numVotes | 0 | 0 | row quarantined |
+| title_ratings | orphan_tconst | rating for a title missing from title_basics | 0 | 0 | row quarantined |
+| title_ratings | rating_or_votes_out_of_range | rating outside [1, 10] or votes <= 0 | 0 | 0 | row quarantined |
+
+_51 rows._
