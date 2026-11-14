@@ -1,0 +1,202 @@
+combination,n_credits,n_people,avg_rating,median_votes,rating_vs_single_role
+director + writer,52887,27267,6.003,516,0.135
+director + producer + writer,16545,11105,5.772,459,-0.096
+producer + writer,10888,7759,5.573,596,-0.295
+director + producer,8301,5226,6.039,545,0.171
+actor + writer,7937,6078,5.628,478,-0.24
+actor + producer,7123,5158,5.306,508,-0.562
+director + editor + writer,4352,3327,5.766,394,-0.102
+actor + director + writer,4079,2832,5.753,469,-0.115
+director + editor + producer + writer,3863,3074,5.495,318,-0.373
+actor + producer + writer,2452,1968,5.122,440,-0.746
+actor + director + producer + writer,2424,1907,5.321,388,-0.547
+director + editor,1831,1484,5.778,371,-0.09
+actor + director,1516,1196,5.719,364,-0.149
+cinematographer + producer,1509,1230,5.556,318,-0.312
+editor + producer,1475,1224,5.658,318,-0.21
+actor + composer,1406,1227,5.688,330,-0.18
+editor + writer,1339,1078,6.338,378,0.47
+cinematographer + director + editor + producer + writer,1331,1095,5.605,264,-0.263
+cinematographer + editor,1320,1083,5.457,266,-0.411
+cinematographer + director,1231,924,5.996,337,0.128
+cinematographer + director + writer,1113,903,6.107,282,0.239
+director + editor + producer,1040,882,5.966,298,0.098
+cinematographer + director + producer + writer,895,769,6.062,317,0.194
+cinematographer + director + editor + writer,863,706,5.571,265,-0.297
+actor + director + editor + producer + writer,725,639,5.1,266,-0.768
+cinematographer + director + producer,682,568,6.497,329,0.629
+actor + director + producer,598,472,5.601,453,-0.267
+composer + director + writer,564,389,5.979,590,0.111
+actor + director + editor + writer,532,455,5.461,312,-0.407
+cinematographer + director + editor + producer,499,430,6.512,265,0.644
+cinematographer + director + editor,482,418,6.13,265,0.262
+actor + cinematographer,446,408,5.347,354,-0.521
+composer + writer,444,387,5.9,522,0.032
+cinematographer + writer,394,355,5.776,287,-0.092
+editor + producer + writer,394,337,5.474,391,-0.394
+producer + production_designer,392,328,5.342,339,-0.526
+actor + production_designer,345,311,5.4,375,-0.468
+composer + producer,338,288,5.612,359,-0.256
+actor + editor,335,314,5.182,316,-0.686
+actor + cinematographer + director + editor + producer + writer,301,237,5.211,217,-0.657
+cinematographer + editor + producer,284,250,5.155,268,-0.713
+composer + director + producer + writer,278,213,5.536,511,-0.332
+production_designer + writer,265,196,5.643,438,-0.225
+composer + editor,226,188,5.235,288,-0.633
+director + production_designer + writer,225,191,5.985,484,0.117
+actor + composer + writer,195,173,5.889,524,0.021
+actor + cinematographer + director + editor + writer,189,149,5.213,227,-0.655
+director + producer + production_designer + writer,162,144,5.485,372,-0.383
+composer + director + editor + writer,154,132,5.527,359,-0.341
+cinematographer + producer + writer,152,138,5.364,332,-0.504
+composer + director + editor + producer + writer,152,138,5.202,384,-0.666
+cinematographer + composer + director + editor + producer + writer,148,122,5.027,304,-0.841
+actor + composer + director + writer,146,110,5.964,1093,0.096
+composer + director,117,105,5.821,467,-0.047
+director + production_designer,104,82,5.741,500,-0.127
+composer + producer + writer,91,79,5.324,416,-0.544
+actor + editor + producer,90,81,4.701,332,-1.167
+cinematographer + editor + writer,90,82,5.796,316,-0.072
+cinematographer + composer + director + editor + writer,88,74,5.486,377,-0.382
+director + editor + producer + production_designer + writer,86,83,5.393,283,-0.475
+actor + composer + director + producer + writer,84,73,5.751,330,-0.117
+actor + editor + writer,83,75,5.095,313,-0.773
+actor + cinematographer + director + producer + writer,80,77,5.39,256,-0.478
+actor + composer + director + editor + producer + writer,79,75,4.948,358,-0.92
+director + editor + production_designer + writer,78,72,5.592,442,-0.276
+actor + director + editor + producer,77,72,5.125,224,-0.743
+cinematographer + production_designer,76,70,5.875,315,0.007
+actor + director + editor,75,71,5.067,259,-0.801
+actor + cinematographer + director + writer,72,71,5.675,253,-0.193
+actor + composer + producer,70,63,5.443,368,-0.425
+actor + editor + producer + writer,70,67,4.856,317,-1.012
+producer + production_designer + writer,66,64,4.877,339,-0.991
+cinematographer + editor + producer + writer,62,57,5.185,323,-0.683
+actor + cinematographer + producer,61,58,4.331,287,-1.537
+cinematographer + director + editor + producer + production_designer + writer,58,57,5.09,294,-0.778
+actor + cinematographer + editor,56,51,4.943,259,-0.925
+composer + director + producer,55,42,5.833,533,-0.035
+editor + production_designer,55,34,5.718,597,-0.15
+actor + composer + producer + writer,54,46,4.959,560,-0.909
+actor + composer + director + editor + writer,48,43,5.313,259,-0.555
+actor + cinematographer + composer + director + editor + producer + writer,46,44,5.109,198,-0.759
+cinematographer + composer,44,35,5.682,379,-0.186
+actor + cinematographer + composer + director + editor + writer,42,34,4.995,190,-0.873
+actor + director + editor + producer + production_designer + writer,37,28,4.584,404,-1.284
+composer + director + editor,37,35,5.814,452,-0.054
+actor + producer + production_designer,34,34,4.976,316,-0.892
+actor + director + producer + production_designer + writer,33,33,5.045,247,-0.823
+cinematographer + composer + director + editor + producer,33,28,5.0,212,-0.868
+actor + cinematographer + director + editor,32,32,5.509,158,-0.359
+actor + producer + production_designer + writer,29,28,4.528,262,-1.34
+actor + production_designer + writer,29,25,5.541,605,-0.327
+cinematographer + composer + editor,28,27,4.493,207,-1.375
+actor + cinematographer + director + editor + producer,27,26,5.441,243,-0.427
+actor + director + production_designer + writer,27,26,5.337,237,-0.531
+cinematographer + director + editor + production_designer + writer,27,26,5.83,195,-0.038
+actor + cinematographer + writer,26,25,5.246,293,-0.622
+director + producer + production_designer,24,23,5.433,488,-0.435
+composer + editor + producer,23,21,5.304,368,-0.564
+actor + composer + director,22,20,6.273,254,0.405
+cinematographer + composer + director + producer + writer,22,19,4.932,346,-0.936
+actor + cinematographer + director,21,21,5.51,329,-0.358
+cinematographer + composer + director + writer,21,14,5.81,295,-0.058
+actor + cinematographer + director + editor + producer + production_designer + writer,20,17,5.41,318,-0.458
+cinematographer + director + producer + production_designer + writer,20,20,4.875,328,-0.993
+composer + editor + writer,20,19,5.66,255,-0.208
+cinematographer + director + production_designer + writer,19,17,5.653,323,-0.215
+actor + cinematographer + editor + producer,18,17,4.561,181,-1.307
+composer + production_designer,17,17,5.694,380,-0.174
+cinematographer + composer + director + editor + producer + production_designer + writer,15,12,4.733,540,-1.135
+composer + director + editor + producer,15,15,5.367,234,-0.501
+actor + composer + editor,14,12,4.6,288,-1.268
+actor + director + editor + production_designer + writer,14,14,4.529,304,-1.339
+composer + director + editor + producer + production_designer + writer,14,12,4.771,503,-1.097
+director + editor + production_designer,13,11,5.938,330,0.07
+actor + cinematographer + composer,12,12,5.8,207,-0.068
+actor + cinematographer + director + editor + production_designer + writer,12,10,4.908,313,-0.96
+actor + cinematographer + editor + producer + writer,12,9,3.892,171,-1.976
+cinematographer + composer + director + editor,12,11,5.367,242,-0.501
+actor + cinematographer + composer + director + editor + producer + production_designer + writer,11,11,5.682,364,-0.186
+composer + editor + producer + writer,11,11,5.182,301,-0.686
+actor + cinematographer + producer + writer,10,10,4.51,178,-1.358
+actor + composer + editor + producer + writer,10,8,3.67,311,-2.198
+cinematographer + composer + producer,10,6,4.68,282,-1.188
+actor + cinematographer + composer + director + writer,9,6,4.256,335,-1.612
+actor + cinematographer + editor + writer,9,8,3.5,337,-2.368
+cinematographer + composer + editor + producer,9,8,4.589,223,-1.279
+cinematographer + director + editor + producer + production_designer,9,9,5.122,274,-0.746
+cinematographer + composer + director + producer,8,8,5.063,278,-0.805
+composer + director + production_designer + writer,8,8,5.9,236,0.032
+editor + production_designer + writer,8,8,5.538,281,-0.33
+actor + cinematographer + director + producer,7,7,5.857,1249,-0.011
+actor + composer + director + editor,7,7,3.643,259,-2.225
+actor + composer + director + editor + producer + production_designer + writer,7,7,5.243,1712,-0.625
+actor + composer + director + producer + production_designer + writer,7,7,5.071,513,-0.797
+actor + composer + editor + producer,7,7,4.586,198,-1.282
+cinematographer + producer + production_designer,7,6,5.3,316,-0.568
+actor + cinematographer + composer + director + producer + writer,6,6,5.617,1351,-0.251
+actor + cinematographer + director + producer + production_designer + writer,6,6,4.333,317,-1.535
+cinematographer + composer + director,6,6,4.367,224,-1.501
+composer + director + editor + production_designer + writer,6,6,5.25,345,-0.618
+actor + composer + director + producer,5,5,5.86,568,-0.008
+actor + director + production_designer,5,5,4.24,344,-1.628
+actor + editor + production_designer,5,3,4.82,685,-1.048
+cinematographer + composer + director + editor + production_designer + writer,5,4,6.22,3447,0.352
+composer + producer + production_designer + writer,5,5,4.48,337,-1.388
+cinematographer + composer + editor + writer,4,4,4.975,246,-0.893
+composer + director + producer + production_designer + writer,4,3,5.825,184,-0.043
+editor + producer + production_designer,4,4,5.675,158,-0.193
+actor + cinematographer + composer + director + editor + production_designer + writer,3,3,5.4,238,-0.468
+actor + cinematographer + composer + editor,3,3,4.133,151,-1.735
+actor + cinematographer + composer + editor + producer,3,1,3.533,527,-2.335
+actor + cinematographer + composer + editor + producer + writer,3,2,4.033,338,-1.835
+actor + cinematographer + composer + producer + writer,3,1,5.0,359,-0.868
+actor + cinematographer + composer + writer,3,3,5.567,507,-0.301
+actor + cinematographer + director + production_designer + writer,3,3,6.1,190,0.232
+actor + composer + editor + writer,3,3,5.8,278,-0.068
+actor + composer + production_designer,3,2,4.933,181,-0.935
+actor + director + producer + production_designer,3,3,3.033,374,-2.835
+actor + editor + producer + production_designer + writer,3,3,6.3,187,0.432
+cinematographer + producer + production_designer + writer,3,3,5.1,312,-0.768
+composer + production_designer + writer,3,3,5.467,349,-0.401
+director + editor + producer + production_designer,3,3,4.8,1032,-1.068
+actor + cinematographer + composer + director,2,2,3.25,107,-2.618
+actor + cinematographer + composer + director + editor,2,2,5.5,135,-0.368
+actor + cinematographer + composer + editor + writer,2,2,4.15,168,-1.718
+actor + cinematographer + production_designer,2,2,4.95,405,-0.918
+actor + composer + director + editor + producer,2,2,4.6,176,-1.268
+actor + composer + director + editor + production_designer + writer,2,2,3.9,208,-1.968
+actor + composer + director + production_designer + writer,2,1,7.45,33756,1.582
+actor + composer + editor + producer + production_designer + writer,2,2,3.25,134,-2.618
+actor + editor + producer + production_designer,2,2,5.5,177,-0.368
+actor + editor + production_designer + writer,2,2,4.5,135,-1.368
+cinematographer + composer + director + editor + producer + production_designer,2,2,4.95,403,-0.918
+cinematographer + composer + director + editor + production_designer,2,2,6.95,425,1.082
+cinematographer + composer + editor + producer + writer,2,2,3.7,107,-2.168
+cinematographer + director + editor + production_designer,2,2,8.05,122,2.182
+cinematographer + director + producer + production_designer,2,2,5.5,163,-0.368
+cinematographer + editor + producer + production_designer,2,2,3.8,142,-2.068
+composer + producer + production_designer,2,2,3.7,729,-2.168
+actor + cinematographer + composer + producer,1,1,4.9,510,-0.968
+actor + cinematographer + editor + producer + production_designer,1,1,3.1,187,-2.768
+actor + cinematographer + producer + production_designer,1,1,4.4,421,-1.468
+actor + cinematographer + producer + production_designer + writer,1,1,4.5,103,-1.368
+actor + cinematographer + production_designer + writer,1,1,5.3,1096,-0.568
+actor + composer + director + producer + production_designer,1,1,3.7,4849,-2.168
+actor + composer + editor + production_designer + writer,1,1,2.3,517,-3.568
+actor + composer + producer + production_designer + writer,1,1,4.1,117,-1.768
+actor + composer + production_designer + writer,1,1,6.8,2872,0.932
+actor + director + editor + producer + production_designer,1,1,3.9,1427,-1.968
+actor + director + editor + production_designer,1,1,4.8,182,-1.068
+cinematographer + composer + director + producer + production_designer + writer,1,1,7.1,929,1.232
+cinematographer + composer + producer + writer,1,1,4.8,972,-1.068
+cinematographer + composer + production_designer,1,1,4.4,5326,-1.468
+cinematographer + composer + writer,1,1,5.1,431,-0.768
+cinematographer + director + production_designer,1,1,3.6,775,-2.268
+cinematographer + editor + producer + production_designer + writer,1,1,9.2,120,3.332
+cinematographer + editor + production_designer,1,1,5.3,189,-0.568
+cinematographer + editor + production_designer + writer,1,1,2.3,285,-3.568
+cinematographer + production_designer + writer,1,1,6.7,785,0.832
+composer + editor + producer + production_designer + writer,1,1,3.3,142,-2.568
+editor + producer + production_designer + writer,1,1,4.4,148,-1.468

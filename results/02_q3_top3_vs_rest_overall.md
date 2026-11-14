@@ -1,0 +1,7 @@
+**Q3 - Summary over all years**
+
+| avg_top3_pct_movies | avg_top3_pct_votes | avg_top3_rating | avg_rest_rating | votes_per_movie_ratio | years_top3_rated_higher | years |
+| --- | --- | --- | --- | --- | --- | --- |
+| 44.2 | 44.7 | 6.04 | 6.09 | 1.07 | 17 | 46 |
+
+_1 rows._
