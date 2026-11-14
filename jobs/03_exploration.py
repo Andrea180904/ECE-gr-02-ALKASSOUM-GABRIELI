@@ -27,7 +27,7 @@ from common.spark import (  # noqa: E402
 )
 
 # ---- parameters -----------------------------------------------------------
-Z_OUTLIER = 3.0            # Q1: |z-score| above which a runtime is "notable"
+Z_OUTLIER = 3.5            # Q1: robust |z| above which a runtime is "notable"
 TOP_GENRES = 3             # Q2/Q3
 HIT_RATING = 8.0           # Q4
 FLOP_AVG_RATING = 6.0      # Q4
@@ -61,6 +61,15 @@ LANGUAGE_ALIASES = {"cmn": "zh", "yue": "zh", "qbn": "nl", "qbp": "pt"}
 
 # ---------------------------------------------------------------------------
 def q1_runtime_outliers(movies: DataFrame) -> None:
+    """Runtime outliers per genre with a robust (median / MAD) z-score.
+
+    Runtimes are strongly right-skewed (a few experimental films last
+    1000+ minutes), which inflates the mean and the standard deviation:
+    with a classic z-score no feature film can be a "short" outlier.
+    The modified z-score of Iglewicz & Hoaglin is robust to this:
+        z = 0.6745 * (runtime - median) / MAD,   outlier if |z| > 3.5
+    The classic mean / std are still reported for comparison.
+    """
     fm = movies.filter(F.col("runtimeMinutes").isNotNull()).select(
         "tconst", "primaryTitle", "year", "runtimeMinutes",
         F.explode("genres").alias("genre"),
@@ -71,11 +80,19 @@ def q1_runtime_outliers(movies: DataFrame) -> None:
         F.stddev_samp("runtimeMinutes").alias("std_runtime"),
         F.percentile_approx("runtimeMinutes", 0.5).alias("median_runtime"),
     )
+    mad = (
+        fm.join(stats.select("genre", "median_runtime"), "genre")
+        .groupBy("genre").agg(F.percentile_approx(
+            F.abs(F.col("runtimeMinutes") - F.col("median_runtime")), 0.5)
+            .alias("mad_runtime"))
+    )
+    stats = stats.join(mad, "genre")
     scored = fm.join(stats, "genre").withColumn(
         "z_score",
-        F.try_divide(F.col("runtimeMinutes") - F.col("avg_runtime"),
-                     F.col("std_runtime")),
-    ).filter(F.abs("z_score") >= Z_OUTLIER).cache()
+        F.try_divide(0.6745 * (F.col("runtimeMinutes")
+                               - F.col("median_runtime")),
+                     F.col("mad_runtime")),
+    ).filter(F.abs("z_score") > Z_OUTLIER).cache()
 
     summary = (
         scored.groupBy("genre").agg(
@@ -89,30 +106,42 @@ def q1_runtime_outliers(movies: DataFrame) -> None:
         .withColumn("pct_outliers", F.round(
             100 * (F.col("n_longer") + F.col("n_shorter"))
             / F.col("n_movies"), 2))
-        .select("genre", "n_movies", F.round("avg_runtime", 1)
-                .alias("avg_runtime"), F.round("std_runtime", 1)
-                .alias("std_runtime"), "median_runtime", "n_longer",
-                "n_shorter", "pct_outliers")
+        .withColumn("short_below", F.round(
+            F.col("median_runtime")
+            - Z_OUTLIER * F.col("mad_runtime") / 0.6745, 0))
+        .withColumn("long_above", F.round(
+            F.col("median_runtime")
+            + Z_OUTLIER * F.col("mad_runtime") / 0.6745, 0))
+        .select("genre", "n_movies",
+                F.round("avg_runtime", 1).alias("avg_runtime"),
+                F.round("std_runtime", 1).alias("std_runtime"),
+                "median_runtime", "mad_runtime", "short_below",
+                "long_above", "n_shorter", "n_longer", "pct_outliers")
         .orderBy(F.desc("pct_outliers"))
     )
     save_result(
         summary, "02_q1_runtime_outliers_by_genre",
         "Q1 - Feature films whose runtime is notably different from their "
-        "genre average (|z| >= %.0f)" % Z_OUTLIER,
+        "genre (robust z-score: |0.6745 (x - median) / MAD| > %.1f; "
+        "short_below / long_above = runtime limits in minutes)" % Z_OUTLIER,
         max_md_rows=40,
     )
-    w = Window.partitionBy("genre").orderBy(F.desc(F.abs("z_score")))
+    w = Window.partitionBy("genre", F.signum("z_score")).orderBy(
+        F.desc(F.abs("z_score")), "tconst")
     examples = (
         scored.withColumn("rk", F.row_number().over(w))
-        .filter("rk <= 3")
-        .select("genre", "primaryTitle", "year", "runtimeMinutes",
-                F.round("avg_runtime", 1).alias("genre_avg"),
-                F.round("z_score", 2).alias("z_score"))
-        .orderBy("genre", F.desc(F.abs("z_score")))
+        .filter("rk <= 2")
+        .select("genre",
+                F.when(F.col("z_score") > 0, "longer").otherwise("shorter")
+                .alias("side"),
+                "primaryTitle", "year", "runtimeMinutes",
+                F.col("median_runtime").alias("genre_median"),
+                F.round("z_score", 2).alias("robust_z"))
+        .orderBy("genre", "side", F.desc(F.abs("robust_z")))
     )
     save_result(examples, "02_q1_runtime_outliers_examples",
-                "Q1 - Most extreme runtime outliers (top 3 per genre)",
-                max_md_rows=45)
+                "Q1 - Most extreme runtime outliers (top 2 longer and top 2 "
+                "shorter per genre)", max_md_rows=60)
     scored.unpersist()
 
 
