@@ -1,0 +1,17 @@
+# Data is downloaded / generated, never committed
+data/
+!data/.gitkeep
+
+# Spark / Python artefacts
+__pycache__/
+*.pyc
+spark-warehouse/
+metastore_db/
+derby.log
+.ipynb_checkpoints/
+checkpoints/
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
