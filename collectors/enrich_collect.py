@@ -180,7 +180,8 @@ def parse_sparql(data: dict, ids: list, entity: str) -> list:
 
 
 def collect_wikidata(client, ids, entity, out: Path) -> None:
-    todo = [i for i in ids if i not in done_ids(out)]
+    done = done_ids(out)
+    todo = [i for i in ids if i not in done]
     print(f"wikidata/{entity}: {len(ids) - len(todo)} done, "
           f"{len(todo)} to fetch")
     query = FILM_QUERY if entity == "film" else PERSON_QUERY
