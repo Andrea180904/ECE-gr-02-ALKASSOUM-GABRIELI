@@ -1,51 +1,60 @@
-**Q1 - Most extreme runtime outliers (top 3 per genre)**
+**Q1 - Most extreme runtime outliers (top 2 longer and top 2 shorter per genre)**
 
-| genre | primaryTitle | year | runtimeMinutes | genre_avg | z_score |
-| --- | --- | --- | --- | --- | --- |
-| Action | h36: | 2017 | 2160 | 101.2 | 60.99 |
-| Action | Burning of the Red Lotus Temple | 1928 | 1620 | 101.2 | 45 |
-| Action | Ooio Aifujairea: Lifedesign | 2025 | 1440 | 101.2 | 39.66 |
-| Adventure | Ooio Aifujairea: Lifedesign | 2025 | 1440 | 93 | 44.04 |
-| Adventure | The Longest Movie on Earth!?: The Narwallus Movie! | 2016 | 600 | 93 | 16.58 |
-| Adventure | Fireside Reading of Dracula | 2022 | 565 | 93 | 15.43 |
-| Animation | Tom and Jerry: The Golden Era Anthology | 1958 | 817 | 82.7 | 27.42 |
-| Animation | Disappeared Quipu | 2018 | 490 | 82.7 | 15.21 |
-| Animation | The Long Walk to Nowhere | 2025 | 420 | 82.7 | 12.6 |
-| Biography | The Steps: A Memoir | 2026 | 542 | 89.2 | 15.41 |
-| Biography | O.J.: Made in America | 2016 | 467 | 89.2 | 12.86 |
-| Biography | Et barns liv | 1999 | 445 | 89.2 | 12.11 |
-| Comedy | London EC1 | 2015 | 5460 | 93.3 | 186.73 |
-| Comedy | Azgrab: The Documentary | 2011 | 1669 | 93.3 | 54.82 |
-| Comedy | Ooio Aifujairea: Lifedesign | 2025 | 1440 | 93.3 | 46.86 |
-| Crime | His Last Stand |  | 990 | 95.7 | 34.94 |
-| Crime | Lemons | 2026 | 751 | 95.7 | 25.6 |
-| Crime | Split | 2004 | 700 | 95.7 | 23.61 |
-| Documentary | Logistics | 2012 | 51,420 | 78 | 229.87 |
-| Documentary | Ambiancé | 2020 | 43,200 | 78 | 193.06 |
-| Documentary | Carnets Filmés (Liste Complète) | 2019 | 28,643 | 78 | 127.89 |
-| Drama | Hunger! | 2015 | 6000 | 96.1 | 159.59 |
-| Drama | Matrjoschka | 2006 | 5700 | 96.1 | 151.48 |
-| Drama | London EC1 | 2015 | 5460 | 96.1 | 144.99 |
-| Family | World Peace & Prayer Day | 2011 | 2400 | 92.3 | 73.44 |
-| Family | De filosoof van Haeghem | 1967 | 385 | 92.3 | 9.32 |
-| Family | Living Neverland | 2013 | 317 | 92.3 | 7.15 |
-| Fantasy | Burning of the Red Lotus Temple | 1928 | 1620 | 94.1 | 47.84 |
-| Fantasy | Funusion | 2016 | 1440 | 94.1 | 42.2 |
-| Fantasy | La Flor | 2018 | 808 | 94.1 | 22.38 |
-| Film-Noir | Not as a Stranger | 1955 | 135 | 81.9 | 3.86 |
-| Film-Noir | Hangmen Also Die! | 1943 | 134 | 81.9 | 3.79 |
-| Film-Noir | Humoresque | 1946 | 125 | 81.9 | 3.13 |
-| History | Saynatakuna: Masks | 2013 | 2905 | 94.3 | 53.17 |
-| History | The Longest Most Meaningless Movie in the World | 1970 | 2880 | 94.3 | 52.7 |
-| History | Hollywood East | 2010 | 1800 | 94.3 | 32.27 |
-| Horror | 24 Hour Psycho | 1993 | 1440 | 88.7 | 60.7 |
-| Horror | Amy's Night Out | 2007 | 675 | 88.7 | 26.34 |
-| Horror | Fan | 2017 | 623 | 88.7 | 24 |
-| Music | The Cure for Insomnia | 1987 | 5220 | 88.4 | 89 |
-| Music | Rock Milestones: Metallica - The Halcyon Years | 2007 | 2007 | 88.4 | 33.28 |
-| Music | Madonna: Live | 2005 | 2005 | 88.4 | 33.24 |
-| Musical | Sigur rós: Route One | 2016 | 1440 | 100.1 | 40.21 |
-| Musical | La Flor | 2018 | 808 | 100.1 | 21.24 |
-| Musical | Der fliegende Holländer | 2007 | 429 | 100.1 | 9.87 |
+| genre | side | primaryTitle | year | runtimeMinutes | genre_median | robust_z |
+| --- | --- | --- | --- | --- | --- | --- |
+| Action | longer | h36: | 2017 | 2160 | 94 | 116.13 |
+| Action | longer | Burning of the Red Lotus Temple | 1928 | 1620 | 94 | 85.77 |
+| Adventure | longer | Ooio Aifujairea: Lifedesign | 2025 | 1440 | 90 | 82.78 |
+| Adventure | longer | The Longest Movie on Earth!?: The Narwallus Movie! | 2016 | 600 | 90 | 31.27 |
+| Animation | longer | Tom and Jerry: The Golden Era Anthology | 1958 | 817 | 81 | 41.37 |
+| Animation | longer | Disappeared Quipu | 2018 | 490 | 81 | 22.99 |
+| Biography | longer | The Steps: A Memoir | 2026 | 542 | 88 | 18.01 |
+| Biography | longer | O.J.: Made in America | 2016 | 467 | 88 | 15.04 |
+| Comedy | longer | London EC1 | 2015 | 5460 | 91 | 362.14 |
+| Comedy | longer | Azgrab: The Documentary | 2011 | 1669 | 91 | 106.44 |
+| Crime | longer | His Last Stand |  | 990 | 93 | 55 |
+| Crime | longer | Lemons | 2026 | 751 | 93 | 40.35 |
+| Documentary | longer | Logistics | 2012 | 51,420 | 74 | 2,164.55 |
+| Documentary | longer | Ambiancé | 2020 | 43,200 | 74 | 1,818.03 |
+| Drama | longer | Hunger! | 2015 | 6000 | 93 | 306.48 |
+| Drama | longer | Matrjoschka | 2006 | 5700 | 93 | 290.92 |
+| Family | longer | World Peace & Prayer Day | 2011 | 2400 | 90 | 119.85 |
+| Family | longer | De filosoof van Haeghem | 1967 | 385 | 90 | 15.31 |
+| Fantasy | longer | Burning of the Red Lotus Temple | 1928 | 1620 | 91 | 85.94 |
+| Fantasy | longer | Funusion | 2016 | 1440 | 91 | 75.83 |
+| Film-Noir | longer | Not as a Stranger | 1955 | 135 | 81 | 3.64 |
+| Film-Noir | longer | Hangmen Also Die! | 1943 | 134 | 81 | 3.57 |
+| Game-Show | longer | The Netflix Slam | 2024 | 150 | 67 | 3.73 |
+| History | longer | Saynatakuna: Masks | 2013 | 2905 | 90 | 105.48 |
+| History | longer | The Longest Most Meaningless Movie in the World | 1970 | 2880 | 90 | 104.55 |
+| Horror | longer | 24 Hour Psycho | 1993 | 1440 | 88 | 101.32 |
+| Horror | longer | Amy's Night Out | 2007 | 675 | 88 | 43.99 |
+| Horror | shorter | Melchiad Koloman | 1920 | 41 | 88 | -3.52 |
+| Horror | shorter | Dark Mansion | 2019 | 41 | 88 | -3.52 |
+| Music | longer | The Cure for Insomnia | 1987 | 5220 | 87 | 216.39 |
+| Music | longer | Rock Milestones: Metallica - The Halcyon Years | 2007 | 2007 | 87 | 80.94 |
+| Musical | longer | Sigur rós: Route One | 2016 | 1440 | 94 | 64.85 |
+| Musical | longer | La Flor | 2018 | 808 | 94 | 34.4 |
+| Mystery | longer | London EC1 | 2015 | 5460 | 92 | 301.73 |
+| Mystery | longer | How Does David Lynch Do It? | 2010 | 1800 | 92 | 96 |
+| News | longer | Australia Votes 2022 | 2022 | 387 | 75 | 14.03 |
+| News | longer | Australia Votes 2019 | 2019 | 387 | 75 | 14.03 |
+| Reality-TV | longer | Sky TV | 1966 | 1440 | 90 | 60.71 |
+| Reality-TV | longer | Craziest Vacation Ever | 2020 | 317 | 90 | 10.21 |
+| Romance | longer | The Man of Her Dreams | 2023 | 750 | 96 | 36.76 |
+| Romance | longer | The Longest Movie on Earth!?: The Narwallus Movie! | 2016 | 600 | 96 | 28.33 |
+| Sci-Fi | longer | Funusion | 2016 | 1440 | 90 | 91.06 |
+| Sci-Fi | longer | Split | 2004 | 700 | 90 | 41.14 |
+| Sport | longer | Azgrab: The Documentary | 2011 | 1669 | 90 | 76.07 |
+| Sport | longer | NHL: Washington Capitals 10 Greatest Games | 2010 | 1200 | 90 | 53.48 |
+| Talk-Show | longer | The Conciousnous Paradigm | 2015 | 190 | 81 | 3.5 |
+| Thriller | longer | Final Call | 2018 | 619 | 93 | 35.48 |
+| Thriller | longer | Barrabas | 1919 | 489 | 93 | 26.71 |
+| Thriller | shorter | Dasher | 2026 | 41 | 93 | -3.51 |
+| Thriller | shorter | Redwood Diaries | 2026 | 41 | 93 | -3.51 |
+| War | longer | The Journey | 1987 | 873 | 92 | 40.52 |
+| War | longer | Europa: The Last Battle | 2017 | 746 | 92 | 33.93 |
+| Western | longer | The Mystery Rider | 1928 | 380 | 70 | 13.94 |
+| Western | longer | The Moon Riders | 1920 | 360 | 70 | 13.04 |
 
-_Showing 45 of 71 rows. Full result: `results/csv/02_q1_runtime_outliers_examples.csv`._
+_54 rows._
