@@ -78,6 +78,8 @@ the URL with its token.
 If Docker has less than 8 GB of memory, lower the Spark driver memory:
 `export SPARK_DRIVER_MEMORY=4g` before using `./run.sh`.
 
+On Windows, if a job fails with `Cannot allocate memory` (this happened to us on `title_principals`, 102M rows), give WSL more memory in `%UserProfile%\.wslconfig` (`[wsl2]`, `memory=11GB`, `swap=8GB`), run `wsl --shutdown` and restart Docker Desktop. `run.sh` runs Spark on 4 cores by default to limit memory use; set `SPARK_MASTER="local[*]"` to use all cores.
+
 ## Optional: smoke test on synthetic data (≈ 5 minutes)
 
 Run this **before** downloading the real data. It generates a tiny IMDb-like
@@ -170,6 +172,4 @@ docker compose down        # add -v to also remove the containers' volumes
 
 | Tool | Used for | Not used for |
 | --- | --- | --- |
-| Claude (Anthropic), chat assistant | Generating the initial version of the code: Docker setup, `run.sh`, all jobs in `jobs/`, the collector, the Kafka producer, the sample-data generator and the report-assembly tool. The code was then reviewed, run and adapted by the team. | The explanations, reasoning and methodological sections of `REPORT.md`, which are written by the team without AI. |
-
-<!-- Edit the table above so that it reflects exactly how you used AI tools. -->
+| Claude (Anthropic), chat assistant | Generating the initial code (Docker setup, `run.sh`, all jobs in `jobs/`, the collector, the Kafka producer, the sample-data generator, the report-assembly tool) and later fixes (Spark version detection in `run.sh`, collector resume, robust z-score in Q1). Help with setup and debugging (memory errors, Git). Suggestions for PR descriptions and review comments. Proofreading of our report drafts (pointing out factual errors) and placing the result tables in `REPORT.md`. | Writing the explanations, reasoning and methodology sections of `REPORT.md`, which were written by the team. |
