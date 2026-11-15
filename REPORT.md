@@ -1,25 +1,9 @@
-# Report – IMDb & Wikipedia with Spark and Kafka
+# 1. Data Preparation
 
-<!--
-HOW TO USE THIS FILE
-- Result blocks (between the RESULTS markers) are filled automatically by
-  `python3 tools/assemble_report.py` from results/*.md. Do not edit them by hand.
-- Every "TODO (team)" must be written by the team. AI tools are NOT allowed for
-  explanations or reasoning in this file (course rule).
-- Delete these comments before submitting.
--->
+## 1.1. Dataset Overview
 
-## Contents
-
-1. [Data preparation](#1-data-preparation)
-2. [Data exploration](#2-data-exploration)
-3. [Data enrichment](#3-data-enrichment)
-4. [Streaming data processing](#4-streaming-data-processing)
-5. [Open question](#5-open-question)
-
-## 1. Data preparation
-
-### Ingested data
+The first step was to explore and prepare the IMDb datasets before starting the analysis. The database contains tables describing movies, people, ratings, and their relationships. The biggest table is `title_principals`, with 102 756 358 rows. It contains the different people involved in each title and their roles.
+Before processing the data, we checked the structure of each table, the number of rows, and the missing values. We considered 3 forms of missing data: SQL `NULL`, the value `\N`, and empty strings. These values were treated as missing information during the cleaning process.
 
 <!-- RESULTS:00_ingestion -->
 **Ingested IMDb tables**
@@ -37,7 +21,32 @@ HOW TO USE THIS FILE
 _7 rows._
 <!-- /RESULTS:00_ingestion -->
 
-### Missing values per column
+## 1.2. Missing Values
+
+The five columns with the highest percentages of missing values were:
+
+- title_akas.attributes: 99.5%
+- title_basics.endYear: 98.7%
+- name_basics.deathYear: 98.3%
+- name_basics.birthYear: 95.7%
+- title_principals.job: 80.7%
+
+These missing values do not always mean that the data is incorrect. For example, endYear is not relevant for most movies, while deathYear is naturally missing for living people.
+We therefore avoided removing all rows containing missing values. Instead, we considered the meaning of each column and applied different treatments depending on the situation.
+
+<!-- RESULTS:01_top5_missing_columns -->
+**Top 5 columns with the highest share of missing values**
+
+| table | column | total_rows | missing_rows | missing_pct |
+| --- | --- | --- | --- | --- |
+| title_akas | attributes | 60,424,702 | 60,107,437 | 99.475 |
+| title_basics | endYear | 12,963,111 | 12,798,642 | 98.731 |
+| name_basics | deathYear | 15,816,005 | 15,550,475 | 98.321 |
+| name_basics | birthYear | 15,816,005 | 15,130,128 | 95.663 |
+| title_principals | job | 102,756,358 | 82,882,023 | 80.659 |
+
+_5 rows._
+<!-- /RESULTS:01_top5_missing_columns -->
 
 <!-- RESULTS:01_missing_values -->
 **Missing values (NULL, '\N' or empty string) per column**
@@ -87,23 +96,16 @@ _7 rows._
 _39 rows._
 <!-- /RESULTS:01_missing_values -->
 
-### Five columns with the highest share of missing values
+## 1.3. Data Quality Checks
 
-<!-- RESULTS:01_top5_missing_columns -->
-**Top 5 columns with the highest share of missing values**
+We tried to identify inconsistent or incorrect data.
 
-| table | column | total_rows | missing_rows | missing_pct |
-| --- | --- | --- | --- | --- |
-| title_akas | attributes | 60,424,702 | 60,107,437 | 99.475 |
-| title_basics | endYear | 12,963,111 | 12,798,642 | 98.731 |
-| name_basics | deathYear | 15,816,005 | 15,550,475 | 98.321 |
-| name_basics | birthYear | 15,816,005 | 15,130,128 | 95.663 |
-| title_principals | job | 102,756,358 | 82,882,023 | 80.659 |
+First, we found 28 people whose death year was earlier than their birth year. We also identified 2 537 people without a death year but with an estimated age above 122. These records were considered suspicious.
+For movies, 548 144 titles had no genre : approximately 4.2% of the dataset. We also found 4 movies with a duration equal to or below 0 and 442 films with a duration above 1 000 minutes. Finally, 6 238 titles had an announced release year after 2026.
 
-_5 rows._
-<!-- /RESULTS:01_top5_missing_columns -->
-
-### Other data-quality issues and how they are handled
+We also checked relationships between tables. For example, 7 262 credits referred to people who did not exist in the people table. We identified 3 109 credits dated before the person's birth and 164 868 credits dated more than ten years after their death, excluding archive-related cases.
+In the title_crew table, 430 director references and 1 159 writer references did not match an existing person. These references were set aside, but the corresponding rows were not automatically deleted. This explains why the number of quarantined rows was 0 in this check: the issue concerned references inside the rows, not necessarily the entire rows.
+Finally, we found 7 130 episodes with a season or episode number equal to or below 0, as well as 5 episodes without a parent series.
 
 <!-- RESULTS:01_quality_issues -->
 **Data-quality issues detected and how they were handled**
@@ -130,6 +132,20 @@ _5 rows._
 _16 rows._
 <!-- /RESULTS:01_quality_issues -->
 
+## 1.4. Cleaning Strategy
+
+We used 3 main treatments depending on the type of issue:
+
+- Set the incorrect value to NULL and add a quality flag when the row could still be useful
+- Quarantine the record when an important relationship or value was unreliable
+- Keep the original data and add a flag when the issue did not prevent further analysis
+
+We chose this approach instead of deleting all incomplete or suspicious records. Deleting rows could remove useful information and reduce the size of the dataset. Another option would have been to repair missing values using an external source, but this would require additional data collection and could introduce new errors. Imputation was also considered, but it would create estimated values that might not reflect the real information.
+
+The original text data was first stored in the Bronze layer. Data types and cleaning rules were then applied in the Silver layer. This allowed us to keep the original information and make the cleaning process easier to track.
+
+During the processing of the largest table, we also faced a `Cannot allocate memory` error. We solved this problem by increasing the Docker memory allocation and using 4 CPU cores. This allowed us to process the large title_principals table successfully.
+
 <!-- RESULTS:01_cleaning_summary -->
 **Row counts before and after cleaning**
 
@@ -146,18 +162,23 @@ _16 rows._
 _7 rows._
 <!-- /RESULTS:01_cleaning_summary -->
 
-### Methodological explanation
+---
 
-- **Chosen method:** TODO (team)
-- **Why:** TODO (team)
-- **Alternatives considered and trade-offs:** TODO (team)
+# 2. Data Exploration
 
-## 2. Data exploration
+## 2.1. Analysis Scope
 
-Common definitions: TODO (team) – explain what a feature-length movie is and
-how popularity and success are measured.
+For this analysis, feature films are defined as titles with "titleType = movie", excluding adult content, and with a duration above 40 minutes. This excludes TV movies and short films.
+We used IMDb ratings and vote counts to study movie popularity and success. The number of votes was used as a popularity indicator. For some analyses, we also applied a minimum vote threshold to make sure that ratings were based on enough user opinions.
 
-### 2.1 Runtime notably different from the genre average
+## 2.2. Detecting Abnormal Movie Durations
+
+The goal was to identify movies with unusual durations. We used a robust z-score based on the median and the Median Absolute Deviation (MAD), with a threshold of 3.5. This method was applied separately to each genre.
+We chose this method because the average and standard deviation can be affected by extreme values. The median and MAD are less sensitive to these values and provide a more reliable way to detect abnormal durations.
+For example, the method identified a movie lasting 51 420 minutes in the Logistics genre. It also detected several unusually long movies in other genres. Action had 1 787 long movies (4.4%), while Comedy had 2 710 (2.8%).
+For short movies, we compared the calculated lower limit with the 40 minute threshold. This lower limit is calculated using the median minus 3.5 times the MAD divided by 0.6745. Horror and Thriller were the two genres with a lower limit above 40 minutes. We identified 4 films that were too short in Horror and 2 in Thriller.
+We initially considered a conventional z-score based on the mean and standard deviation. However, extreme durations affected the results too much. Following the review of the method, we switched to the robust z-score.
+Another possible method would be to use a fixed duration limit for every genre. This would be simpler, but it would not take into account the differences between genres. The robust method is more adapted to the distribution of each genre.
 
 <!-- RESULTS:02_q1_runtime_outliers_by_genre -->
 **Q1 - Feature films whose runtime is notably different from their genre (robust z-score: |0.6745 (x - median) / MAD| > 3.5; short_below / long_above = runtime limits in minutes)**
@@ -257,7 +278,14 @@ _26 rows._
 _54 rows._
 <!-- /RESULTS:02_q1_runtime_outliers_examples -->
 
-### 2.2 Top three genres per year (1980–2025)
+## 2.3. The 3 Most Popular Genres Over Time
+
+We wanted to identify the 3 most popular genres each year between 1980 and 2025. Popularity was measured using the total number of IMDb votes received by movies in each genre.
+
+Drama was present in the top 3 every year and ranked first 42 times out of 46. Comedy appeared in the top 3 for 34 years, Action for 29 years, and Adventure for 16 years.
+The results also show how genre popularity changed over time. In 1980, the top 3 genres were Drama, Adventure, and Horror. In 2000, they were Drama, Comedy, and Adventure. In 2025, they were Drama, Action, and Comedy.
+We chose the total number of votes because it reflects audience interest rather than only the number of movies produced. An alternative would be to rank genres by the number of movies released each year. However, this would measure production volume rather than popularity.
+One limit is that a movie can belong to several genres. In this analysis, it is counted in every genre associated with it. So, the total number of genre credits can be higher than the number of movies.
 
 <!-- RESULTS:02_q2_top3_genres -->
 **Q2 - Top 3 genres per year, 1980-2025 (by total votes)**
@@ -331,7 +359,13 @@ _46 rows._
 _8 rows._
 <!-- /RESULTS:02_q2_top3_frequency -->
 
-### 2.3 Top three genres compared with the other genres
+## 2.4. Comparing the Top Three Genres With the Others
+
+We compared movies belonging to the 3 most popular genres with movies from all other genres. The objective was to check whether the most popular genres also received better ratings.
+
+The top 3 genres represented 44.2% of the movies and 44.7% of all votes. Their average rating was 6.04, compared with 6.09 for the other genres. They received a higher average rating in only 17 of the 46 years studied.
+These results show that the most popular genres do not necessarily have better ratings. Their popularity is mainly linked to audience interest and the number of votes they receive.
+We could have compared only the number of movies or only the average rating. However, using both the number of films and votes, together with ratings, gives a more complete view of popularity and audience appreciation.
 
 <!-- RESULTS:02_q3_top3_vs_rest_overall -->
 **Q3 - Summary over all years**
@@ -398,7 +432,15 @@ _1 rows._
 _46 rows._
 <!-- /RESULTS:02_q3_top3_vs_rest -->
 
-### 2.4 Directors with a single movie rated 8.0 or more
+## 2.5. Directors With One Successful Movie
+
+The goal was to identify directors who had exactly one highly rated movie, while their other movies received lower ratings.
+
+We selected directors who had exactly 1 movie rated at least 8.0, and at least 2 other movies with an average rating of 6.0 or below. Each movie also needed at least 1 000 votes to make the ratings more reliable.
+We identified 47 directors matching these conditions. For example, Irvin Kershner directed "The Empire Strikes Back", rated 8.7, while his 9 other movies had an average rating of 5.94. M. Night Shyamalan had "The Sixth Sense", rated 8.2, while his 15 other movies had an average rating of 5.87.
+
+Other examples include James McTeigue, director of "V for Vendetta", and Martin Campbell, director of "Casino Royale".
+We chose the 1 000-vote threshold to avoid including movies with ratings based on very few opinions. A lower threshold would include more movies and directors, but the ratings would be less reliable. A higher threshold would make the selection stricter and reduce the number of results.
 
 <!-- RESULTS:02_q4_one_hit_directors -->
 **Q4 - Directors with exactly one movie rated >= 8.0 and >= 2 other movies averaging <= 6.0 (movies with >= 1,000 votes)**
@@ -449,7 +491,14 @@ _46 rows._
 _Showing 40 of 47 rows. Full result: `results/csv/02_q4_one_hit_directors.csv`._
 <!-- /RESULTS:02_q4_one_hit_directors -->
 
-### 2.5 TV series: best episode early, worst episode in the last season
+## 2.6. Declining TV Series
+
+We wanted to identify TV series with a highly rated episode in their first 2 seasons and a poorly rated episode in their final season.
+
+We selected series with at least 3 seasons containing 10 or more episodes. We then checked whether the best-rated episode of the entire series was in season 1 or 2, and whether the worst-rated episode of the entire series was in the last season. When several episodes had the same rating, we used the number of votes to break the tie.
+We identified 566 series matching these conditions. For example, "House of Cards" had a best episode rated 9.5 in season 2 and a worst episode rated 2.5 in season 6. "The Flash" had a best episode rated 9.6 and a worst episode rated 3.8. "Two and a Half Men" had ratings of 8.7 and 3.6 for its best and worst episodes. Same analysis for "13 Reasons Why" and "You".
+
+Another option would be to compare the average rating of the first seasons with the average rating of the final season. This would give a broader view of the series' evolution. However our method focuses on the best and worst episodes and highlights more extreme changes.
 
 <!-- RESULTS:02_q5_series_decline -->
 **Q5 - TV series (>= 3 seasons of >= 10 episodes) whose worst episode is in the last season and best episode in seasons 1-2**
@@ -500,7 +549,15 @@ _Showing 40 of 47 rows. Full result: `results/csv/02_q4_one_hit_directors.csv`._
 _Showing 40 of 566 rows. Full result: `results/csv/02_q5_series_decline.csv`._
 <!-- /RESULTS:02_q5_series_decline -->
 
-### 2.6 Actors and actresses successful in several languages
+## 2.7. Languages of Successful Movies
+
+IMDb does not provide a direct column for the original language of each movie. We estimated the language using `title_akas`, first using the language field and then the country when the language was missing.
+
+A successful movie was defined as a movie with a rating of at least 7.0 and at least 10,000 votes. We found a language for 87.7% of rated movies. English was the most common language, followed by Spanish, German and French.
+
+We also studied actors who had successful movies in several languages. We found 208 actors with successful movies in at least three languages. Toshirō Mifune was first, with successful movies in six languages.
+
+Another option would have been to use an external source, such as Wikidata, to find the original language. This could provide additional information, but it would require another data collection process. Our method was easier to apply to the IMDb data, although the language may not always be the original one.
 
 <!-- RESULTS:02_q6_language_distribution -->
 **Q6 - Inferred original language of rated feature films (coverage: 278,734/317,982 = 87.7%)**
@@ -595,7 +652,15 @@ _6 rows._
 _Showing 40 of 208 rows. Full result: `results/csv/02_q6_multilingual_actors.csv`._
 <!-- /RESULTS:02_q6_multilingual_actors -->
 
-### 2.7 Long careers with an early popularity peak
+## 2.8. Actors Reaching Their Popularity Peak Early
+
+The objective was to identify actors whose popularity reached its highest point during the first third of their career.
+
+We selected actors with a career of at least 20 years and at least 15 rated feature films. We identified the year with the highest relative popularity and checked whether it fell within the first third of their career.
+We used relative popularity rather than raw vote counts because recent movies generally receive more votes than older movies. To make the comparison fairer the number of votes was normalized using the average number of votes for movies released in the same year.
+We identified 20 517 actors meeting the career and film conditions. Among them, 8 095 actors representing 39.5%, reached their popularity peak during the first third of their career.
+
+Another option would be to use the first half of the career instead of the first third. This would include more actors and use a less strict definition of an early peak. However the first third provides a clearer definition of an early career success.
 
 <!-- RESULTS:02_q7_summary -->
 **Q7 - Summary**
@@ -652,7 +717,15 @@ Actors/actresses with a career of at least 20 years and at least 15 rated featur
 _Showing 40 of 8,095 rows. Full result: `results/csv/02_q7_early_peak_actors.csv`._
 <!-- /RESULTS:02_q7_early_peak_actors -->
 
-### 2.8 Multi-talented film professionals
+## 2.9. Does Having Multiple Roles Improve Movie Ratings?
+
+We studied whether people involved in several roles on the same movie were associated with higher or lower ratings. We used the "title_principals" and "title_crew" tables to identify roles such as actor, director, writer, and producer. We only considered movies with at least 100 votes.
+The average rating for single-role credits was 5.87. Credits where a person worked as both director and writer had an average rating of 6.00. Director and producer credits had an average rating 0.17 points above the single-role reference.
+However, combinations involving acting and production roles had lower ratings. Actor and producer credits were 0.56 points below the reference, while actor, producer, and writer credits were 0.75 points below it.
+To make the comparison fairer, we also compared people with themselves. This allowed us to compare their ratings when they had one role with their ratings when they had multiple roles reducing differences between individuals.
+For 6 944 people, 51.6% had higher ratings for their multi-role credits. However, the average difference was only +0.016 which is very close to zero.
+
+An alternative would be to compare all single-role credits with all multi-role credits directly. However, this could be influenced by differences between people. Comparing the same individuals is fairer, although it does not remove every possible bias.
 
 <!-- RESULTS:02_q8_role_combinations -->
 **Q8 - Performance of films where one person holds several roles (baseline single-role credits: avg rating 5.868, median votes 552)**
@@ -737,12 +810,7 @@ _1 rows._
 _Showing 30 of 13,233 rows. Full result: `results/csv/02_q8_multi_talented_people.csv`._
 <!-- /RESULTS:02_q8_multi_talented_people -->
 
-### Methodological explanation
-
-- **Chosen method:** TODO (team) – for each question, explain the
-  definitions and thresholds used.
-- **Why:** TODO (team)
-- **Alternatives considered and trade-offs:** TODO (team)
+---
 
 ## 3. Data enrichment
 
@@ -985,13 +1053,53 @@ TODO (team) – required by the instructions.
 - **Why:** TODO (team)
 - **Alternatives considered and trade-offs:** TODO (team)
 
-## 5. Open question
+---
 
-### Question, why it matters, data used
+# 5. Open Question: Do Actors and Directors Perform Better When They Work Together?
 
-TODO (team)
+## 5.1. Objective and Method
 
-### Results
+The objective of this analysis was to determine whether actors and directors receive better movie ratings when they work together. We focused on repeated collaborations between the same actor and director.
+
+To perform this analysis, we joined five IMDb tables: title_basics, title_ratings, title_crew, title_principals, name_basics.
+We selected duos that had worked together on at least 3 movies. The actor also had to be among the first 4 credited people in the movie, and each movie needed at least 1 000 votes. These conditions helped us focus on important collaborations and ratings based on a sufficient number of votes.
+After applying these filters, we identified 2 069 actor-director duos.
+
+Some of the most frequent collaborations were Kartal Tibet and Kemal Sunal with 26 movies, Akira Kurosawa and Toshirō Mifune with 16 movies, and John Ford and John Wayne with 14 movies.
+
+<!-- RESULTS:05_most_frequent_duos -->
+**Most frequent duos**
+
+| director_name | actor_name | n_joint | first_year | last_year | joint_avg | director_apart | actor_apart | lift |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Kartal Tibet | Kemal Sunal | 26 | 1976 | 1990 | 6.91 | 5.4 | 7.37 | 0.52 |
+| Gerald Thomas | Sidney James | 21 | 1960 | 1974 | 6.27 | 5.45 | 6.83 | 0.13 |
+| Akira Kurosawa | Toshirō Mifune | 16 | 1948 | 1965 | 7.81 | 7.25 | 7.22 | 0.58 |
+| David Dhawan | Govinda | 16 | 1990 | 2009 | 6 | 4.96 | 5.56 | 0.74 |
+| Priyadarshan | Mohanlal | 15 | 1985 | 2021 | 7.51 | 6.62 | 6.87 | 0.77 |
+| John Ford | John Wayne | 14 | 1939 | 1963 | 7.25 | 6.9 | 6.32 | 0.64 |
+| Erik Balling | Morten Grunwald | 14 | 1967 | 1981 | 6.94 | 6.75 | 6.15 | 0.49 |
+| Terence Fisher | Peter Cushing | 13 | 1957 | 1974 | 6.48 | 6.28 | 5.96 | 0.36 |
+| Neri Parenti | Paolo Villaggio | 13 | 1980 | 1996 | 5.98 | 4.3 | 6.21 | 0.73 |
+| Rohit Shetty | Ajay Devgn | 12 | 2003 | 2024 | 5.77 | 5.27 | 5.91 | 0.18 |
+| Satyajit Ray | Soumitra Chatterjee | 12 | 1959 | 1989 | 7.95 | 7.91 | 7.72 | 0.13 |
+| Neri Parenti | Christian De Sica | 12 | 1985 | 2008 | 4.4 | 6.02 | 5.25 | -1.24 |
+| Woody Allen | Mia Farrow | 11 | 1982 | 1992 | 7.16 | 6.86 | 6.17 | 0.65 |
+| Terence Fisher | Christopher Lee | 11 | 1957 | 1968 | 6.46 | 6.32 | 5.81 | 0.4 |
+| Roy William Neill | Basil Rathbone | 11 | 1942 | 1946 | 6.82 | 6.7 | 6.54 | 0.2 |
+
+_Showing 15 of 2,069 rows. Full result: `results/csv/05_most_frequent_duos.csv`._
+<!-- /RESULTS:05_most_frequent_duos -->
+
+## 5.2. Measuring the Collaboration Effect
+
+We compared the average rating of movies made together with a baseline rating for each duo.
+
+The baseline was calculated using the director's movies without the actor and the actor's movies without the director. This approach was chosen because it provides a more specific comparison than using the global IMDb average. It helps measure whether the collaboration performs better than the usual results of each individual.
+The average rating of movies made together was 6.68, compared with 6.46 for the baseline. The average lift was therefore +0.216 points with a standard error of 0.012. The median lift was +0.23 points.
+Overall, 1 420 duos representing 68.6% of the total had a positive lift. We also performed a sign test to check whether positive results were more frequent than negative ones. The test gave a z-score of +16.95 which indicates that the positive result is unlikely to be explained by random variation alone.
+
+These results suggest that actors and directors often receive better ratings when they work together. However, this analysis does not prove that the collaboration itself causes the higher ratings.
 
 <!-- RESULTS:05_overall -->
 **Open question - overall result**
@@ -1006,6 +1114,15 @@ TODO (team)
 | duos with positive lift | 1,420 (68.6%) |
 | sign test z-score (H0: 50% positive) | +16.95 |
 <!-- /RESULTS:05_overall -->
+
+## 5.3. Differences Between Decades
+
+We also studied whether the collaboration effect changed over time.
+
+The strongest results were observed in the 1980s and 1990s with average lifts of +0.32 and +0.31. Around 77% of duos had a positive lift during the 1990s.
+The effect was weaker in the 2010s with an average lift of +0.08. It became slightly negative in the 2020s, with a lift of -0.03. The 1910s also showed a negative result of -0.19 but this period contained only 4 duos.
+
+These results must be interpreted carefully because some decades contain much smaller samples than others. The results for the 1910s and 2020s are therefore less representative.
 
 <!-- RESULTS:05_by_decade -->
 **Lift by decade of the first collaboration**
@@ -1028,6 +1145,16 @@ TODO (team)
 _12 rows._
 <!-- /RESULTS:05_by_decade -->
 
+## 5.4. Evolution During Repeated Collaborations
+
+We examined how the collaboration effect changed according to the number of movies made together.
+
+The average lift was +0.45 for the first joint movie and +0.30 for the second. It then decreased to +0.05 for the fifth movie and later collaborations.
+This suggests that the positive effect is stronger at the beginning of a collaboration and becomes smaller over time.
+However, this result may be affected by survivor bias. Duos that continue working together for many years may be the ones that have already achieved success. Studying the collaboration rank helps us understand this effect but it does not completely remove the bias.
+
+One possible improvement would be to include duos with only two joint movies. This would increase the number of collaborations studied although the results for each duo would be based on fewer films.
+
 <!-- RESULTS:05_by_collaboration_rank -->
 **Rating of the n-th film made together (relative to the duo's baseline)**
 
@@ -1041,6 +1168,13 @@ _12 rows._
 
 _5 rows._
 <!-- /RESULTS:05_by_collaboration_rank -->
+
+## 5.5. Alternatives and Limitations
+
+One alternative would be to compare the movies made together with the global IMDb average. However this would be less precise because some actors and directors naturally receive higher ratings than others. We therefore preferred a baseline based on the individual results of each actor and director.
+We also used the mean lift to measure the average difference between ratings. The median lift was added as a second indicator because it is less sensitive to extreme values. Both indicators show a positive overall result.
+There are some limitations to this analysis. First, the minimum of 3 joint movies and the 1 000-vote threshold exclude some collaborations. Second, selecting actors among the first four credited people may exclude actors with smaller roles. Finally the number of duos is not the same in every decade which makes some comparisons less reliable.
+Overall, the results show a positive association between repeated actor-director collaborations and movie ratings. However, other factors such as the movie budget, genre, production team, or the popularity of the people involved may also influence ratings. Further analysis would be needed to identify the exact reasons behind this relationship.
 
 <!-- RESULTS:05_top_duos -->
 **Duos with the highest lift**
@@ -1084,35 +1218,3 @@ _Showing 15 of 2,069 rows. Full result: `results/csv/05_top_duos.csv`._
 
 _Showing 10 of 2,069 rows. Full result: `results/csv/05_bottom_duos.csv`._
 <!-- /RESULTS:05_bottom_duos -->
-
-<!-- RESULTS:05_most_frequent_duos -->
-**Most frequent duos**
-
-| director_name | actor_name | n_joint | first_year | last_year | joint_avg | director_apart | actor_apart | lift |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Kartal Tibet | Kemal Sunal | 26 | 1976 | 1990 | 6.91 | 5.4 | 7.37 | 0.52 |
-| Gerald Thomas | Sidney James | 21 | 1960 | 1974 | 6.27 | 5.45 | 6.83 | 0.13 |
-| Akira Kurosawa | Toshirō Mifune | 16 | 1948 | 1965 | 7.81 | 7.25 | 7.22 | 0.58 |
-| David Dhawan | Govinda | 16 | 1990 | 2009 | 6 | 4.96 | 5.56 | 0.74 |
-| Priyadarshan | Mohanlal | 15 | 1985 | 2021 | 7.51 | 6.62 | 6.87 | 0.77 |
-| John Ford | John Wayne | 14 | 1939 | 1963 | 7.25 | 6.9 | 6.32 | 0.64 |
-| Erik Balling | Morten Grunwald | 14 | 1967 | 1981 | 6.94 | 6.75 | 6.15 | 0.49 |
-| Terence Fisher | Peter Cushing | 13 | 1957 | 1974 | 6.48 | 6.28 | 5.96 | 0.36 |
-| Neri Parenti | Paolo Villaggio | 13 | 1980 | 1996 | 5.98 | 4.3 | 6.21 | 0.73 |
-| Rohit Shetty | Ajay Devgn | 12 | 2003 | 2024 | 5.77 | 5.27 | 5.91 | 0.18 |
-| Satyajit Ray | Soumitra Chatterjee | 12 | 1959 | 1989 | 7.95 | 7.91 | 7.72 | 0.13 |
-| Neri Parenti | Christian De Sica | 12 | 1985 | 2008 | 4.4 | 6.02 | 5.25 | -1.24 |
-| Woody Allen | Mia Farrow | 11 | 1982 | 1992 | 7.16 | 6.86 | 6.17 | 0.65 |
-| Terence Fisher | Christopher Lee | 11 | 1957 | 1968 | 6.46 | 6.32 | 5.81 | 0.4 |
-| Roy William Neill | Basil Rathbone | 11 | 1942 | 1946 | 6.82 | 6.7 | 6.54 | 0.2 |
-
-_Showing 15 of 2,069 rows. Full result: `results/csv/05_most_frequent_duos.csv`._
-<!-- /RESULTS:05_most_frequent_duos -->
-
-### Key takeaways
-
-TODO (team)
-
-### Methodology, why it was chosen, alternatives considered
-
-TODO (team)
