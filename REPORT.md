@@ -812,9 +812,12 @@ _Showing 30 of 13,233 rows. Full result: `results/csv/02_q8_multi_talented_peopl
 
 ---
 
-## 3. Data enrichment
+# 3. Data Enrichment
 
-### Scope
+## 3.1. Data Collection and Objectives
+
+The objective of data enrichment was to add information from Wikipedia and Wikidata to the IMDb database. We wanted to collect movie synopses and biographies to provide more context about films and the people involved in them. To select the movies, we took the top 10 titles for each genre and each year from 1980 to 2025. The selection was based on the number of IMDb votes so that the most popular movies were included. A movie can appear in several genres. For each selected movie we collected information about the first 3 people in the IMDb credit order. This means the 3 first credited people are not necessarily the 3 most important people according to another ranking.
+To connect IMDb data with the correct Wikipedia pages we used Wikidata. Its IMDb identifier property P345 helped us find the correct Wikidata item and then identify the corresponding English Wikipedia article. This method was chosen because searching directly by title or name can lead to incorrect matches especially when several films or people have similar names. The collection was performed outside Spark while Spark was used to process and clean the collected data.
 
 <!-- RESULTS:03_enrichment_targets -->
 **Enrichment scope: top 10 films per genre per year (1980-2025) and their first 3 principals**
@@ -830,7 +833,12 @@ _Showing 30 of 13,233 rows. Full result: `results/csv/02_q8_multi_talented_peopl
 _5 rows._
 <!-- /RESULTS:03_enrichment_targets -->
 
-### Coverage and flagged gaps
+## 3.2. Information Collected
+
+For movies, we collected information from Wikipedia pages mainly the text from the Plot section. When a Plot section was not available, we used the introduction of the article as an alternative. The collection process generated 9832 movie, genre and year combinations corresponding to 6821 distinct films. We collected information for 10157 people using the first 3 credited people for each selected film.
+We obtained a synopsis for 6330 films representing 92.8% of the films. Among these 362 summaries came from the article introduction because no Plot section was available.
+For people, we collected biographies for 7601 persons, representing 74.8% of the selected people. These biographies were based on the introduction of the corresponding Wikipedia articles. We also checked Birth year consistency using Wikidata. We identified 252 differences between the birth years recorded in Wikidata and IMDb. These differences were kept as information to review rather than automatically replacing the original IMDb values.
+Each collected line contains a notes field to report missing or potentially unreliable information. Example, NO_ENGLISH_WIKIPEDIA_ARTICLE indicates that no English Wikipedia article was found while SYNOPSIS_SHORT identifies a synopsis that may be too short. This makes data quality issues visible and easier to review.
 
 <!-- RESULTS:03_enrichment_coverage -->
 **Enrichment coverage**
@@ -878,7 +886,13 @@ _3 rows._
 _14 rows._
 <!-- /RESULTS:03_enrichment_notes -->
 
-### Samples
+## 3.3. Data Processing, Reliability and Traceability
+
+After collection, Spark was used to process the enriched data. It extracted the Plot section when available, removed duplicates, enforced a consistent schema and calculated quality notes. This step ensured that the collected information could be integrated into the IMDb dataset in a consistent format.
+We also stored the source of each piece of information to ensure traceability. This included the permanent Wikipedia revision identifier (oldid), the Wikidata item, the collection date, and the licence information.
+The use of open sources was important for our project. Wikipedia content is available under the CC BY-SA licence while Wikidata data is available under the CC0 licence. The relevant licence information was stored with each line so that the origin and usage conditions of the data could be identified later.
+Not all IMDb records could be matched with a Wikidata item or an English Wikipedia article. For movies, 242 films had no corresponding Wikidata item while 248 had no English article. For people 1720 had no Wikidata item and 835 had no corresponding article.
+The Wikipedia API also applies request limits. To avoid sending too many requests we added a delay between requests, used a User-Agent and handled API responses such as HTTP 429. A delay of 0.25s between Wikipedia requests and 1s between Wikidata requests was implemented from the beginning of the collection process. During the review of PR 9 the adequacy of these delays was discussed. The full collection took approximately one hour. We also made the process resumable so that it could continue after an interruption. During testing, a problem with resuming the collection was identified and fixed.
 
 <!-- RESULTS:03_enrichment_films_sample -->
 **Sample of enriched films**
@@ -914,29 +928,29 @@ _Showing 8 of 200 rows. Full result: `results/csv/03_enrichment_films_sample.csv
 _Showing 8 of 200 rows. Full result: `results/csv/03_enrichment_people_sample.csv`._
 <!-- /RESULTS:03_enrichment_people_sample -->
 
-### Methodological explanation
+## 3.4. Scalability, Alternatives and Limitations
 
-- **Chosen method:** TODO (team)
-- **Why:** TODO (team)
-- **Alternatives considered and trade-offs:** TODO (team)
-- **Provenance, licences and rate limits:** TODO (team)
-- **Scalability to the full IMDb dataset:** TODO (team)
+The collection code was designed to be reusable on a larger part of IMDb. The target selection can be configured especially the years to process and the number of movies to select for each genre and year. This makes it possible to increase the selection beyond the initial top 10 and adapt the collection to different needs. The collection can also resume after an interruption instead of starting again from the beginning. This is important when processing a much larger number of IMDb records because the API requests can take time and may be interrupted.
+One alternative would be to use Wikipedia dumps. They can be faster for collecting large amounts of information and could be more suitable for processing the full IMDb database. Unfortunately, they require downloading and processing large files. Another option would be to search directly for pages using movie titles or people's names. However, this approach could produce incorrect matches when several pages have similar names. Using Wikidata identifiers was more reliable for connecting IMDb records with Wikipedia pages.
+The main limitations are that some movies and people don't have a corresponding Wikidata item or Wikipedia article and that API rate limits slow down the collection. The initial selection was also limited to the top 10 movies per genre and year but the parameters can be changed to extend the process.
 
-## 4. Streaming data processing
+---
 
-### Results of the test run
+# 4. Streaming
 
-<!-- RESULTS:04_streaming_metrics -->
-**Streaming metrics (from StreamingQueryProgress)**
+## 4.1. Streaming Architecture and Objectives
 
-| query | batches | input rows | avg input rows/s | avg processed rows/s | avg batch ms | max batch ms | rows dropped by watermark | max state rows |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| flagged_console | 130 | 2,488 | 1.6 | 11.8 | 1470 | 4,666 | 0 | 2,026 |
-| flagged_to_parquet | 131 | 2,488 | 1.6 | 5.8 | 3447 | 6,832 | 0 | 2,026 |
-| window_counts | 130 | 2,488 | 1.6 | 5.5 | 3647 | 6,898 | 0 | 2,026 |
+The objective of the streaming part was to monitor Wikipedia modifications and identify pages related to IMDb movies or people. We used the Wikimedia recent changes stream as the source of real time events.
+The streaming architecture contains 3 main steps. First, a producer receives the Wikimedia stream. It filters the events to keep only the English and French Wikipedia editions, articles and page modifications or creations. The filtered events are then sent to the Kafka topic wikistreams which has 3 partitions.
+Spark Structured Streaming reads the events from this Kafka topic and processes them. This architecture separates event collection from data processing and allows Spark to consume the events continuously. During the test, the producer observed 56005 modifications. The processing pipeline read 2488 modifications from the English and French streams.
 
-_Run from 2026-11-14T20:29:19.840Z to 2026-11-14T20:51:00.000Z; watermark 10 minutes, window 5 minutes, trigger 10 seconds._
-<!-- /RESULTS:04_streaming_metrics -->
+## 4.2. Filtering and Matching Wikipedia Pages With IMDb
+
+After reading the events from Kafka, Spark applied several filtering rules to identify modifications potentially related to IMDb.
+The filtering rules included title_with_film_hint, person_with_role_hint, popular_title_exact, person_exact and enriched_page. These rules used information such as film-related words, people's names and pages already present in the enrichment dataset.
+For example, the Wikipedia page Yonggary (1999 film) was matched with the IMDb movie Reptilian. Another example, the French title "Rien que pour vos cheveux" was matched with You Don't Mess with the Zohan.
+Some rules could also generate false positives. For example, pages such as Wolf and Stagecoach could be selected by the popular_title_exact rule even when the match was not sufficiently precise. This shows that filtering rules need to balance the number of relevant pages identified with the risk of incorrect matches.
+During the test, 62 modifications were identified as potentially related to IMDb. This represented approximately 2–3% of the modifications in a 5min window.
 
 <!-- RESULTS:04_streaming_by_match_type -->
 **Flagged edits by matching rule**
@@ -949,17 +963,6 @@ _Run from 2026-11-14T20:29:19.840Z to 2026-11-14T20:51:00.000Z; watermark 10 min
 
 _3 rows._
 <!-- /RESULTS:04_streaming_by_match_type -->
-
-<!-- RESULTS:04_streaming_by_wiki -->
-**Flagged edits by wiki**
-
-| wiki | edits |
-| --- | --- |
-| enwiki | 49 |
-| frwiki | 13 |
-
-_2 rows._
-<!-- /RESULTS:04_streaming_by_wiki -->
 
 <!-- RESULTS:04_streaming_top_pages -->
 **Most edited IMDb-related pages**
@@ -989,21 +992,6 @@ _2 rows._
 
 _Showing 20 of 46 rows. Full result: `results/csv/04_streaming_top_pages.csv`._
 <!-- /RESULTS:04_streaming_top_pages -->
-
-<!-- RESULTS:04_streaming_windows -->
-**Events per 5 minutes window (closed windows only, watermark 10 minutes)**
-
-| window_start | window_end | wiki | events | imdb_events | distinct_pages | pct_imdb |
-| --- | --- | --- | --- | --- | --- | --- |
-| 2026-11-14 20:25:00 | 2026-11-14 20:30:00 | enwiki | 449 | 9 | 377 | 2 |
-| 2026-11-14 20:25:00 | 2026-11-14 20:30:00 | frwiki | 91 | 3 | 79 | 3.3 |
-| 2026-11-14 20:30:00 | 2026-11-14 20:35:00 | enwiki | 365 | 9 | 330 | 2.47 |
-| 2026-11-14 20:30:00 | 2026-11-14 20:35:00 | frwiki | 101 | 3 | 81 | 2.97 |
-| 2026-11-14 20:35:00 | 2026-11-14 20:40:00 | enwiki | 394 | 9 | 335 | 2.28 |
-| 2026-11-14 20:35:00 | 2026-11-14 20:40:00 | frwiki | 88 | 3 | 74 | 3.41 |
-
-_6 rows._
-<!-- /RESULTS:04_streaming_windows -->
 
 <!-- RESULTS:04_streaming_flagged_sample -->
 **Flagged events (first rows)**
@@ -1039,19 +1027,64 @@ _6 rows._
 _Showing 25 of 62 rows. Full result: `results/csv/04_streaming_flagged_sample.csv`._
 <!-- /RESULTS:04_streaming_flagged_sample -->
 
-### Filtering strategy
+## 4.3. Event Time, Watermark and Late Events
 
-TODO (team)
+Wikipedia events contain a timestamp indicating when the modification actually happened. This is called event time. It's different from processing time which is the moment when Spark receives and processes the event.
+This distinction is important because events don't always arrive in the correct order. Some modifications can be received minutes after they actually occurred. To handle late events, we used a watermark of 10 minutes based on the Wikipedia event timestamp. This means that Spark can accept events that arrive up to 10min later than their event time. Events arriving after this limit may be excluded from the results.
+We also used the event identifier to remove duplicates. This prevents the same Wikipedia modification from being counted more than once even if it's received several times.
+The processing uses 5min windows and append mode. In append mode, a window is written only after the watermark has passed the end of that window. This means that Spark waits before producing the final result for a window allowing late events within the watermark limit to be included.
+During our test, no rows were dropped because of the watermark. This is consistent with the fact that the stream was processed continuously and the observed events didn't arrive later than the allowed 10min delay. We checked this using Spark's numRowsDroppedByWatermark metric which counts the rows rejected because they arrived too late.
 
-### Handling of late-arriving data
+<!-- RESULTS:04_streaming_windows -->
+**Events per 5 minutes window (closed windows only, watermark 10 minutes)**
 
-TODO (team) – required by the instructions.
+| window_start | window_end | wiki | events | imdb_events | distinct_pages | pct_imdb |
+| --- | --- | --- | --- | --- | --- | --- |
+| 2026-11-14 20:25:00 | 2026-11-14 20:30:00 | enwiki | 449 | 9 | 377 | 2 |
+| 2026-11-14 20:25:00 | 2026-11-14 20:30:00 | frwiki | 91 | 3 | 79 | 3.3 |
+| 2026-11-14 20:30:00 | 2026-11-14 20:35:00 | enwiki | 365 | 9 | 330 | 2.47 |
+| 2026-11-14 20:30:00 | 2026-11-14 20:35:00 | frwiki | 101 | 3 | 81 | 2.97 |
+| 2026-11-14 20:35:00 | 2026-11-14 20:40:00 | enwiki | 394 | 9 | 335 | 2.28 |
+| 2026-11-14 20:35:00 | 2026-11-14 20:40:00 | frwiki | 88 | 3 | 74 | 3.41 |
 
-### Methodological explanation
+_6 rows._
+<!-- /RESULTS:04_streaming_windows -->
 
-- **Chosen method:** TODO (team)
-- **Why:** TODO (team)
-- **Alternatives considered and trade-offs:** TODO (team)
+## 4.4. Performance and Results
+
+The streaming test lasted approximately 22min from 20:29 to 20:51 UTC.
+The producer observed 56005 modifications while the processing pipeline read 2488 modifications from the English and French Wikipedia streams. Among these, 62 were identified as potentially related to IMDb. The pipeline processed batches every 10s. The average processing time was between 1.5s and 3.6s with a maximum of 6.8s. We also observed several interruptions in the Wikimedia stream. The application was able to reconnect and continue receiving modifications.
+These results show that the pipeline was able to process the stream within the selected time windows. However, the number of identified IMDb related modifications remained relatively small compared with the total number of events.
+
+<!-- RESULTS:04_streaming_metrics -->
+**Streaming metrics (from StreamingQueryProgress)**
+
+| query | batches | input rows | avg input rows/s | avg processed rows/s | avg batch ms | max batch ms | rows dropped by watermark | max state rows |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| flagged_console | 130 | 2,488 | 1.6 | 11.8 | 1470 | 4,666 | 0 | 2,026 |
+| flagged_to_parquet | 131 | 2,488 | 1.6 | 5.8 | 3447 | 6,832 | 0 | 2,026 |
+| window_counts | 130 | 2,488 | 1.6 | 5.5 | 3647 | 6,898 | 0 | 2,026 |
+
+_Run from 2026-11-14T20:29:19.840Z to 2026-11-14T20:51:00.000Z; watermark 10 minutes, window 5 minutes, trigger 10 seconds._
+<!-- /RESULTS:04_streaming_metrics -->
+
+<!-- RESULTS:04_streaming_by_wiki -->
+**Flagged edits by wiki**
+
+| wiki | edits |
+| --- | --- |
+| enwiki | 49 |
+| frwiki | 13 |
+
+_2 rows._
+<!-- /RESULTS:04_streaming_by_wiki -->
+
+## 4.5. Alternatives and Limitations
+
+We think that monitoring more Wikipedia language editions can be an alternative. This could increase the number of relevant modifications but it would increase the volume of data and the processing requirements. We limited the stream to English and French to keep the processing manageable.
+Another option would be to use more advanced matching techniques instead of relying on filtering rules. For example, text similarity could help identify pages whose titles are different from the IMDb titles this would require additional processing and validation.
+The 10min watermark was selected as a balance between accepting late events and limiting the delay of the results. A shorter watermark would produce results more quickly but could exclude more late events. A longer watermark would accept more delayed modifications but would increase the waiting time before windows are written in append mode.
+The main limitations are the restricted language coverage, the possibility of false positives and the fact that some very late events may be ignored. The filtering rules could be improved in future work to increase matching accuracy.
 
 ---
 
